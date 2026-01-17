@@ -1,0 +1,24 @@
+workflow_name: "Harness PQL Routing Logic"
+trigger: "Salesforce Lead Status Change -> 'Open - High Intent'"
+
+steps:
+  - name: "Check Owner Availability"
+    action: "Round Robin"
+    rules:
+      - if: "Territory == 'North America' AND Segment == 'Enterprise'"
+        assign_to: "Group: NA_Ent_SDRs"
+      - if: "Territory == 'EMEA'"
+        assign_to: "Group: EMEA_SDRs"
+      
+  - name: "Select Sequence"
+    logic: |
+      IF Product_Interest__c == 'CI/CD':
+         Add to Sequence: "Tech_Lead_CI_CD_Value_Prop"
+      ELSE IF Product_Interest__c == 'Cloud Cost':
+         Add to Sequence: "CFO_Cloud_Efficiency_Playbook"
+      ELSE:
+         Add to Sequence: "General_Platform_Intro"
+
+  - name: "Slack Notification"
+    channel: "#sales-alerts"
+    message: "🚨 NEW PQL: {Company} has crossed usage threshold on {Product_Interest__c}. Assigned to {Owner}."
